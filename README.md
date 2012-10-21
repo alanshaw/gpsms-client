@@ -1,4 +1,4 @@
-gpsms-client
+GPSMS Client
 ============
 
 The GPSMS phonegap client
