@@ -1,4 +1,4 @@
-require(['exports'], (exports) ->
+define((require, exports, module) ->
 	
 	Inbox = Backbone.View.extend
 		

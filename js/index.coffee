@@ -1,14 +1,17 @@
-require(['migrate', 'inbox'], (migrations, inbox) ->
+onDeviceReady = -> 
 	
-	$(document).one('deviceready', ->
-		console.log 'deviceready'
+	console.log 'deviceready'
+	
+	require(['migrate', 'inbox'], (migrate, inbox) ->
 		
-		# IMPORTANT!: When adding a new version, add it to the FRONT of this array
-		versions = ['2.0.0', '1.2.0']
+		console.log 'Dependencies loaded'
+		
+		versions = ['1.2.0', '2.0.0']
+		latestVersion = versions[versions.length - 1]
 		version = null
 		database = null
 		
-		# Work backwards from current version until we open a database of the correct version
+		# Work forwards from first version until we open a database of the correct version
 		for version in versions
 			try
 				database = window.openDatabase('gpsms', version, 'GPSMS', 1000000)
@@ -16,11 +19,13 @@ require(['migrate', 'inbox'], (migrations, inbox) ->
 			catch invalidStateError
 				console.error invalidStateError
 		
+		console.log "App version is #{latestVersion}, database version is #{version}"
+		
 		# Are we going to have to transition the database?
-		if version isnt versions[0]
+		if version isnt latestVersion
 			
 			# Get a list of versions we're going to have to transition through
-			transitionVersions = versions.slice(0, versions.indexOf(version)).reverse()
+			transitionVersions = versions.slice(versions.indexOf(version) + 1)
 			currentTransitionVersion = version
 			
 			# Perform schema migrations
@@ -29,17 +34,32 @@ require(['migrate', 'inbox'], (migrations, inbox) ->
 				# Migration functions must follow the following naming convention
 				migrationName = "#{currentTransitionVersion} to #{transitionVersion}"
 				
+				console.log "Migrating #{migrationName}"
+				
 				# Call the migration function if it exists
-				migrations[migrationName]?(tx)
+				migrate[migrationName]?(tx)
 				
 				# We are now at the next version
 				currentTransitionVersion = transitionVersion
 			
-			onMigrateDbSuccess = -> database.changeVersion(version, versions[0])
-			onMigrateDbError = (tx, error) -> alert "Error upgrading GPSMS database: #{error}"; throw error
+			onMigrateDbSuccess = -> database.changeVersion(version, latestVersion)
 			
-			database.transaction(migrateDb, onMigrateDbError, onMigrateDbSuccess);
+			onMigrateDbError = (tx, error) -> 
+				
+				console.error tx
+				
+				console.error error
+				
+				alert "Error upgrading GPSMS database"
+				
+				throw error
+			
+			database.transaction(migrateDb, onMigrateDbError, onMigrateDbSuccess)
 		
 		new inbox.Inbox(el: $('#pg-inbox'))
 	)
-)
+	
+	true
+
+#document.addEventListener('deviceready', onDeviceReady, false)
+onDeviceReady()
