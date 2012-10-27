@@ -7,7 +7,7 @@ onDeviceReady = ->
 		console.log 'Dependencies loaded'
 		
 		versions = ['1.2.0', '2.0.0']
-		latestVersion = versions[versions.length - 1]
+		latestVersion = _.last(versions)
 		version = null
 		database = null
 		
@@ -17,7 +17,7 @@ onDeviceReady = ->
 				database = window.openDatabase('gpsms', version, 'GPSMS', 1000000)
 				break
 			catch invalidStateError
-				console.error invalidStateError
+				console.log "Database isn't version #{version}"
 		
 		console.log "App version is #{latestVersion}, database version is #{version}"
 		
@@ -61,5 +61,4 @@ onDeviceReady = ->
 	
 	true
 
-#document.addEventListener('deviceready', onDeviceReady, false)
-onDeviceReady()
+document.addEventListener('deviceready', onDeviceReady, false)

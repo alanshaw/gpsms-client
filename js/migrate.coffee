@@ -47,5 +47,5 @@ define((require, exports, module) ->
 		
 		console.log 'Completed migration from 1.2.0 to 2.0.0'
 	
-	exports
+	return
 )

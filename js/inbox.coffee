@@ -12,4 +12,6 @@ define((require, exports, module) ->
 			###
 		
 	exports.Inbox = Inbox
+	
+	return
 )
