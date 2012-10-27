@@ -1,15 +1,31 @@
-onDeviceReady = -> 
+require(['migrate', 'inbox', 'exports'], (migrate, inbox, exports) ->
 	
-	console.log 'deviceready'
+	console.log 'Dependencies loaded'
 	
-	require(['migrate', 'inbox'], (migrate, inbox) ->
-		
-		console.log 'Dependencies loaded'
+	# Give the app module ability to bind and trigger custom named events
+	_.extend(exports, Backbone.Events)
+	
+	version = null
+	
+	###
+	# @return {String}
+	###
+	exports.getVersion = -> version
+	
+	database = null
+	
+	###
+	# @return {Database}
+	###
+	exports.getDatabase = -> database
+	
+	###
+	# Initialises the application
+	###
+	exports.init = ->
 		
 		versions = ['1.2.0', '2.0.0']
 		latestVersion = _.last(versions)
-		version = null
-		database = null
 		
 		# Work forwards from first version until we open a database of the correct version
 		for version in versions
@@ -56,9 +72,7 @@ onDeviceReady = ->
 			
 			database.transaction(migrateDb, onMigrateDbError, onMigrateDbSuccess)
 		
-		new inbox.Inbox(el: $('#pg-inbox'))
-	)
+		delete exports.init
 	
-	true
-
-document.addEventListener('deviceready', onDeviceReady, false)
+	return
+)
