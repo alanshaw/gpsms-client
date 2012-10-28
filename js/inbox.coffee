@@ -53,7 +53,7 @@ define(['app', 'messages', 'location', 'exports'], (app, messages, location, exp
 			
 			message = @messages.getById(id)
 			
-			location.Location.instance().show(message)
+			location.Location.instance().show message
 	
 	Inbox.AUTO_REQUEST_MAX_AGE = 1000 * 60 * 5
 	
