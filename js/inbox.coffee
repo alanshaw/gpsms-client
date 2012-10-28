@@ -1,11 +1,6 @@
-define(['app', 'messages', 'exports'], (app, messages, exports) ->
-	
-	instance = null
+define(['app', 'messages', 'location', 'exports'], (app, messages, location, exports) ->
 	
 	Inbox = Backbone.View.extend
-		
-		instance: ->
-			if instance? then instance else new Inbox(el: $('#pg-inbox'))
 		
 		initialize: ->
 			
@@ -14,7 +9,11 @@ define(['app', 'messages', 'exports'], (app, messages, exports) ->
 			messages = new messages.Messages()
 			
 			messages.on('add', (message) =>
-				@renderMessage(message)
+				@onMessageAdd(message)
+			)
+			
+			messages.on('change', (message) =>
+				@onMessageChange(message)
 			)
 			
 			messages.fetch()
@@ -33,10 +32,7 @@ define(['app', 'messages', 'exports'], (app, messages, exports) ->
 				
 				@lastRequestTime = now
 		
-		###
-		# @param {Message} The message Model to render
-		###
-		renderMessage: (message) ->
+		onMessageAdd: (message) ->
 			
 			list = @$('.content ul')
 			
@@ -46,8 +42,24 @@ define(['app', 'messages', 'exports'], (app, messages, exports) ->
 			
 			# TODO: Attach click event
 		
+		onMessageChange: (message) ->
+			
+			# TODO: Get message element and re-render
+			
+		
+		onMessageItemClick: (item) ->
+			
+			id = item.data('id')
+			
+			message = @messages.getById(id)
+			
+			location.Location.instance().show(message)
 	
 	Inbox.AUTO_REQUEST_MAX_AGE = 1000 * 60 * 5
+	
+	instance = null
+	
+	Inbox.instance = -> if instance? then instance else new Inbox(el: $('#pg-inbox'))
 	
 	exports.Inbox = Inbox
 	

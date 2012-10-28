@@ -72,6 +72,8 @@ require(['migrate', 'inbox', 'exports'], (migrate, inbox, exports) ->
 			
 			database.transaction(migrateDb, onMigrateDbError, onMigrateDbSuccess)
 		
+		inbox.Inbox.instance()
+		
 		delete exports.init
 	
 	return
