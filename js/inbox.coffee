@@ -2,19 +2,17 @@ define(['app', 'messages', 'location', 'exports'], (app, messages, location, exp
 	
 	Inbox = Backbone.View.extend
 		
+		events: 
+			'click .content ul a': @onMessageItemClick
+		
 		initialize: ->
 			
 			@$el.bind('pageShow', => @onPageShow())
 			
 			messages = new messages.Messages()
 			
-			messages.on('add', (message) =>
-				@onMessageAdd(message)
-			)
-			
-			messages.on('change', (message) =>
-				@onMessageChange(message)
-			)
+			messages.on('add', (message) => @onMessageAdd(message))
+			messages.on('change', (message) => @onMessageChange(message))
 			
 			messages.fetch()
 			
@@ -39,8 +37,6 @@ define(['app', 'messages', 'location', 'exports'], (app, messages, location, exp
 			# TODO: Template for message
 			
 			# TODO: Insert at correct position
-			
-			# TODO: Attach click event
 		
 		onMessageChange: (message) ->
 			
