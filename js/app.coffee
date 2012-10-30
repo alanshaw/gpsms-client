@@ -1,4 +1,4 @@
-require(['migrate', 'inbox', 'exports'], (migrate, inbox, exports) ->
+require(['migrate', 'account', 'inbox', 'exports'], (migrate, account, inbox, exports) ->
 	
 	console.log 'Dependencies loaded'
 	
@@ -72,7 +72,16 @@ require(['migrate', 'inbox', 'exports'], (migrate, inbox, exports) ->
 			
 			database.transaction(migrateDb, onMigrateDbError, onMigrateDbSuccess)
 		
-		inbox.Inbox.instance()
+		# Does the user have an account?
+		new account.AccountModel().fetch(success: (model) ->
+			
+			if model?
+				view = inbox.InboxView.instance()
+			else
+				view = account.RegistrationView.instance()
+			
+			$.mobile.changePage(view.el)
+		)
 		
 		delete exports.init
 	

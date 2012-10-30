@@ -1,13 +1,13 @@
 define(['app', 'location', 'exports'], (app, location, exports) ->
 	
-	Sent = Backbone.View.extend
+	SentView = Backbone.View.extend
 		
 		events: 
 			'click .content ul a': @onMessageItemClick
 		
 		initialize: ->
 			
-			messages = new messages.Messages()
+			messages = new messages.MessageCollection()
 			
 			messages.on('add', (message) => @onMessageAdd(message))
 			
@@ -33,13 +33,13 @@ define(['app', 'location', 'exports'], (app, location, exports) ->
 			
 			message = @messages.getById(id)
 			
-			location.Location.instance().show message
+			location.LocationView.instance().show message
 	
 	instance = null
 	
-	Sent.instance = -> if instance? then instance else new Sent(el: $('#pg-sent')) 
+	SentView.instance = -> if instance? then instance else new SentView(el: $('#pg-sent')) 
 	
-	exports.Sent = Sent
+	exports.SentView = SentView
 	
 	return
 )

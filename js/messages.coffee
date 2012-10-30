@@ -1,12 +1,12 @@
 define(['app', 'exports'], (app, exports) ->
 	
-	Message = Backbone.Model.extend
+	MessageModel = Backbone.Model.extend
 		initialize: ->
 	
-	exports.Message = Message
+	exports.MessageModel = MessageModel
 	
-	Messages = Backbone.Collection.extend
-		model: Message
+	MessageCollection = Backbone.Collection.extend
+		model: MessageModel
 	
-	exports.Messages = Messages
+	exports.MessageCollection = MessageCollection
 )

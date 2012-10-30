@@ -1,6 +1,6 @@
 define(['app', 'messages', 'location', 'exports'], (app, messages, location, exports) ->
 	
-	Inbox = Backbone.View.extend
+	InboxView = Backbone.View.extend
 		
 		events: 
 			'click .content ul a': @onMessageItemClick
@@ -9,7 +9,7 @@ define(['app', 'messages', 'location', 'exports'], (app, messages, location, exp
 			
 			@$el.bind('pageShow', => @onPageShow())
 			
-			messages = new messages.Messages()
+			messages = new messages.MessageCollection()
 			
 			messages.on('add', (message) => @onMessageAdd(message))
 			messages.on('change', (message) => @onMessageChange(message))
@@ -24,7 +24,7 @@ define(['app', 'messages', 'location', 'exports'], (app, messages, location, exp
 			
 			now = 0
 			
-			if @lastRequestTime + Inbox.AUTO_REQUEST_MAX_AGE > now
+			if @lastRequestTime + InboxView.AUTO_REQUEST_MAX_AGE > now
 				
 				# TODO: Request messages, add to @messages collection
 				
@@ -49,15 +49,15 @@ define(['app', 'messages', 'location', 'exports'], (app, messages, location, exp
 			
 			message = @messages.getById(id)
 			
-			location.Location.instance().show message
+			location.LocationView.instance().show message
 	
-	Inbox.AUTO_REQUEST_MAX_AGE = 1000 * 60 * 5
+	InboxView.AUTO_REQUEST_MAX_AGE = 1000 * 60 * 5
 	
 	instance = null
 	
-	Inbox.instance = -> if instance? then instance else new Inbox(el: $('#pg-inbox'))
+	InboxView.instance = -> if instance? then instance else new InboxView(el: $('#pg-inbox'))
 	
-	exports.Inbox = Inbox
+	exports.InboxView = InboxView
 	
 	return
 )

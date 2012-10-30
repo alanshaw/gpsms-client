@@ -57,6 +57,15 @@
 		<a href="#pg-compose" data-role="button" class="ui-btn-right">Compose</a>
 	</div><!-- /footer -->
 	
+	<script class="tmpl-message" type="text/x-_-tmpl">
+		<li>
+			<a href="#pg-location">
+				<h2><%- name %></h2>
+				<p><%- timestamp %></p>
+			</a>
+		</li>
+	</script>
+	
 </div><!-- /page -->
 
 <div id="pg-drafts" data-role="page" data-add-back-btn="true">
@@ -136,6 +145,30 @@
 	</div><!-- /footer -->
 	
 </div><!-- /page -->
+
+<div id="dlg-registration" data-role="dialog">
+	
+	<div data-role="header">
+		<h1>Register</h1>
+	</div><!-- /header -->
+
+	<div data-role="content">
+		TODO: Add registration fields
+	</div><!-- /content -->
+	
+</div><!-- /dialog -->
+
+<div id="dlg-login" data-role="dialog">
+	
+	<div data-role="header">
+		<h1>Login</h1>
+	</div><!-- /header -->
+
+	<div data-role="content">
+		TODO: Add login fields
+	</div><!-- /content -->
+	
+</div><!-- /dialog -->
 
 <script src="lib/cordova-2.1.0.js"></script>
 <script src="lib/underscore-1.4.2.min.js"></script>

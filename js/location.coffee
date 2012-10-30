@@ -1,6 +1,6 @@
 define(['app', 'exports'], (app, exports) ->
 	
-	Location = Backbone.View.extend
+	LocationView = Backbone.View.extend
 		
 		initialize: -> 
 			
@@ -22,9 +22,9 @@ define(['app', 'exports'], (app, exports) ->
 	
 	instance = null
 	
-	Location.instance = -> if instance? then instance else new Location(el: $('pg-location'))
+	LocationView.instance = -> if instance? then instance else new LocationView(el: $('pg-location'))
 	
-	exports.Location = Location
+	exports.LocationView = LocationView
 	
 	return
 )
