@@ -4,11 +4,15 @@ define ['database', 'exports'], (database, exports) ->
 		
 		create: (model, options) -> 
 			
+			fields = 'id,name,number,countryCode,password'
+			values = _.map(fields.split(','), (field) -> model.get(field)) # Array of values
+			places = _.map(values, -> '?').join() # String of ?'s
+			
 			database.get().transaction(
 				(tx) ->
 					tx.executeSql(
-						'INSERT INTO ACCOUNT (id, name, number, countryCode, password) VALUES (?, ?, ?, ?, ?)',
-						[model.get('id'), model.get('name'), model.get('number'), model.get('countryCode'), model.get('password')]
+						"INSERT INTO ACCOUNT (#{fields}) VALUES (#{values})",
+						values
 					)
 				options.success
 				options.error
@@ -24,21 +28,10 @@ define ['database', 'exports'], (database, exports) ->
 						[]
 						(tx, result) ->
 							
-							if !result.rows.length
-								options.success null
-							else 
-								
-								account = new AccountModel()
-								row = result.rows[0]
-								
-								account.id = row.id
-								account.name = row.name
-								account.number = row.number
-								account.countryCode = row.countryCode
-								account.password = row.password
-								
-								options.success account
-								
+							account = if !result.rows.length then null else new AccountModel(result.rows[0])
+							
+							options.success account
+							
 						options.error
 					)
 			)
