@@ -1,4 +1,4 @@
-define(['app', 'exports'], (app, exports) ->
+define ['app', 'exports'], (app, exports) ->
 	
 	LocationView = Backbone.View.extend
 		
@@ -27,4 +27,3 @@ define(['app', 'exports'], (app, exports) ->
 	exports.LocationView = LocationView
 	
 	return
-)

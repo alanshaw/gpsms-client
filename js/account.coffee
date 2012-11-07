@@ -70,7 +70,7 @@ define ['database', 'exports'], (database, exports) ->
 			number: ''
 			countryCode: ''
 			password: ''
-			
+		
 		initialize: -> @repository = AccountRepository.instance()
 	
 	exports.AccountModel = AccountModel

@@ -1,4 +1,4 @@
-define(['app', 'location', 'exports'], (app, location, exports) ->
+define ['app', 'location', 'exports'], (app, location, exports) ->
 	
 	SentView = Backbone.View.extend
 		
@@ -42,4 +42,3 @@ define(['app', 'location', 'exports'], (app, location, exports) ->
 	exports.SentView = SentView
 	
 	return
-)

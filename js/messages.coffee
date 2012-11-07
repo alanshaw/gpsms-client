@@ -1,4 +1,4 @@
-define(['database', 'exports'], (database, exports) ->
+define ['database', 'exports'], (database, exports) ->
 	
 	exports.State = State = RECEIVED: 0, DRAFT: 1, UNSENT: 2, SENT: 3
 	
@@ -20,7 +20,7 @@ define(['database', 'exports'], (database, exports) ->
 				options.success
 				options.error
 			)
-			
+		
 		read: (model, options) ->
 			
 			if model.id?
@@ -56,7 +56,7 @@ define(['database', 'exports'], (database, exports) ->
 							options.error
 						)
 				)
-			
+		
 		update: (model, options) ->
 			
 			fields = 'sender_id,recipients,latitude,longitude,text,created,read,state,id'
@@ -67,7 +67,7 @@ define(['database', 'exports'], (database, exports) ->
 				options.success
 				options.error
 			)
-			
+		
 		delete: (model, options) ->
 			
 			database.get().transaction(
@@ -77,14 +77,31 @@ define(['database', 'exports'], (database, exports) ->
 			)
 	
 	MessageModel = Backbone.Model.extend
-		initialize: ->
+		
+		sync: database.dbSync
+		
+		initialize: -> @repository = new MessageRepository(State.RECEIVED)
 	
 	exports.MessageModel = MessageModel
+	
+	DraftMessageModel = MessageModel.extend
+		initialize: -> @repository = new MessageRepository(State.RECEIVED)
+	
+	UnsentMessageModel = MessageModel.extend
+		initialize: -> @repository = new MessageRepository(State.UNSENT)
+	
+	SentMessageModel = MessageModel.extend
+		initialize: -> @repository = new MessageRepository(State.SENT)
 	
 	MessageCollection = Backbone.Collection.extend
 		model: MessageModel
 	
 	exports.MessageCollection = MessageCollection
 	
+	exports.DraftMessageCollection = MessageCollection.extend model: DraftMessageModel
+	
+	exports.UnsentMessageCollection = MessageCollection.extend model: UnsentMessageModel
+	
+	exports.UnsentMessageCollection = MessageCollection.extend model: SentMessageModel
+	
 	return
-)
