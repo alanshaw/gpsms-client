@@ -1,4 +1,4 @@
-define(['app', 'messages', 'location', 'exports'], (app, messages, location, exports) ->
+define ['messages', 'location', 'exports'], (messages, location, exports) ->
 	
 	InboxView = Backbone.View.extend
 		
@@ -60,4 +60,3 @@ define(['app', 'messages', 'location', 'exports'], (app, messages, location, exp
 	exports.InboxView = InboxView
 	
 	return
-)

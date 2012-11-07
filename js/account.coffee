@@ -1,11 +1,10 @@
-define(['app', 'sync', 'exports'], (app, sync, exports) ->
+define ['database', 'exports'], (database, exports) ->
 	
-	AccountRepository = ->
-	
-	_.extend AccountRepository,
+	class AccountRepository extends database.CrudRepository
+		
 		create: (model, options) -> 
 			
-			app.getDatabase().transaction(
+			database.get().transaction(
 				(tx) ->
 					tx.executeSql(
 						'INSERT INTO ACCOUNT (id, name, number, countryCode, password) VALUES (?, ?, ?, ?, ?)',
@@ -18,7 +17,7 @@ define(['app', 'sync', 'exports'], (app, sync, exports) ->
 		# No read by ID (only ONE account in GPSMS)
 		read: (model, options) ->
 			
-			app.getDatabase().transaction(
+			database.get().transaction(
 				(tx) ->
 					tx.executeSql(
 						'SELECT id, name, number, countryCode, password FROM ACCOUNT'
@@ -46,7 +45,7 @@ define(['app', 'sync', 'exports'], (app, sync, exports) ->
 			
 		update: (model, options) ->
 			
-			app.getDatabase().transaction(
+			database.get().transaction(
 				(tx) ->
 					tx.executeSql(
 						'UPDATE ACCOUNT SET name = ?, number = ?, countryCode = ?, password = ?',
@@ -58,7 +57,7 @@ define(['app', 'sync', 'exports'], (app, sync, exports) ->
 			
 		delete: (model, options) ->
 			
-			app.getDatabase().transaction(
+			database.get().transaction(
 				(tx) -> tx.executeSql('DELETE FROM ACCOUNT WHERE id = ?', [model.get('id')])
 				options.success
 				options.error
@@ -71,7 +70,7 @@ define(['app', 'sync', 'exports'], (app, sync, exports) ->
 	
 	AccountModel = Backbone.Model.extend
 		
-		sync: sync.localSync
+		sync: database.dbSync
 		
 		defaults:
 			name: 'Unknown'
@@ -93,6 +92,4 @@ define(['app', 'sync', 'exports'], (app, sync, exports) ->
 	
 	exports.RegistrationView = RegistrationView
 	
-	
 	return
-)

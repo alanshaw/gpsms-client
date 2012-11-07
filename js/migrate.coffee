@@ -1,4 +1,4 @@
-define((require, exports, module) ->
+define (require, exports, module) ->
 	
 	exports['1.2.0 to 2.0.0'] = (tx) ->
 		
@@ -44,4 +44,3 @@ define((require, exports, module) ->
 		)
 	
 	return
-)
