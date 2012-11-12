@@ -1,36 +1,34 @@
-define ['migrate', 'exports'], (migrate, exports) ->
+define ['app', 'migrate', 'exports'], (app, migrate, exports) ->
 	
 	database = null
-	
-	###
-	# @return {Database}
-	###
-	exports.get = -> database
 	
 	###
 	# Migrate the database from the current state to the latest version. 
 	#
 	# @param {Array<String>} versions The application versions (previous to current) 
 	###
-	exports.migrate = (versions) ->
+	exports.migrate = ->
 		
-		latestVersion = _.last(versions)
+		appVersions = app.getVersions()
+		appVersion = app.getVersion()
 		
-		# Work forwards from first version until we open a database of the correct version
-		for version in versions
+		# Work forwards from first app version until we open a database of the correct version
+		for dbVersion in appVersions
 			try
-				database = window.openDatabase('gpsms', version, 'GPSMS', 1000000)
+				database = window.openDatabase('gpsms', dbVersion, 'GPSMS', 1000000)
 				break
 			catch invalidStateError
-				console.log "Database isn't version #{version}"
+				console.log "Database isn't version #{dbVersion}"
 		
-		console.log "App version is #{latestVersion}, database version is #{version}"
+		if not database then throw new Error 'Web SQL Database API unavailable'
+		
+		console.log "App version is #{appVersion}, database version is #{dbVersion}"
 		
 		# Are we going to have to transition the database?
-		if version isnt latestVersion
+		if dbVersion isnt appVersion
 			
 			# Get a list of versions we're going to have to transition through
-			transitionVersions = versions.slice(versions.indexOf(version) + 1)
+			transitionVersions = appVersions.slice(appVersions.indexOf(dbVersion) + 1)
 			currentTransitionVersion = version
 			
 			# Perform schema migrations
@@ -47,7 +45,7 @@ define ['migrate', 'exports'], (migrate, exports) ->
 				# We are now at the next version
 				currentTransitionVersion = transitionVersion
 			
-			onMigrateDbSuccess = -> database.changeVersion(version, latestVersion)
+			onMigrateDbSuccess = -> database.changeVersion(dbVersion, appVersion)
 			
 			onMigrateDbError = (tx, error) -> 
 				
@@ -62,13 +60,13 @@ define ['migrate', 'exports'], (migrate, exports) ->
 			database.transaction(migrateDb, onMigrateDbError, onMigrateDbSuccess)
 	
 	###
-	# CRUD repository interface
+	# Get a connection to the database.
+	#
+	# @return {Database}
 	###
-	exports.CrudRepository = class
-		create: (model, options) -> 
-		read: (model, options) -> 
-		update: (model, options) -> 
-		delete: (model, options) -> 
+	exports.get = -> 
+		if not database then exports.migrate()
+		database
 	
 	logArgs = -> console.log arguments
 	
@@ -77,9 +75,9 @@ define ['migrate', 'exports'], (migrate, exports) ->
 	###
 	# A Backbone.sync function that makes use of a CrudRepository
 	###
-	dbSync = (method, model, options) ->
+	exports.dbSync = (method, model, options) ->
 		
-		options = _.extend(defaultSyncOptions, options)
+		_.defaults options, defaultSyncOptions
 		
 		repository = model.repository
 		
@@ -88,7 +86,7 @@ define ['migrate', 'exports'], (migrate, exports) ->
 			when 'read' then repository.read(model, options)
 			when 'update' then repository.update(model, options)
 			when 'delete' then repository.delete(model, options)
-	
-	exports.dbSync = dbSync
+		
+		return
 	
 	return

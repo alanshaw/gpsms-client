@@ -150,10 +150,44 @@
 	
 	<div data-role="header">
 		<h1>Register</h1>
+		<a href="#" class="ui-btn-right">Login</a>
 	</div><!-- /header -->
 
 	<div data-role="content">
-		TODO: Add registration fields
+		<form action="" method="post">
+			
+			<div data-role="fieldcontain">
+				<label for="name">Name:</label>
+				<input type="text" name="name" id="name" />
+			</div>
+			
+			<div data-role="fieldcontain">
+				<label for="name">Mobile Number:</label>
+				<input type="tel" name="number" id="number" />
+			</div>
+			
+			<div data-role="fieldcontain">
+				<label for="country-code">Country code:</label>
+				<select id="country-code" name="country-code">
+					<option value="+44">United Kingdom +44</option>
+				</select>
+			</div>
+			
+			<div data-role="fieldcontain">
+				<label for="password">Password:</label>
+				<input type="password" name="password" id="password" />
+			</div>
+			
+			<div data-role="fieldcontain">
+				<label for="password-confirm">Confirm Password:</label>
+				<input type="password" name="password-confirm" id="password-confirm" />
+			</div>
+			
+			<div data-role="fieldcontain">
+				<input type="submit" value="Register"/>
+			</div>
+			
+		</form>
 	</div><!-- /content -->
 	
 </div><!-- /dialog -->

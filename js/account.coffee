@@ -1,6 +1,6 @@
 define ['database', 'exports'], (database, exports) ->
 	
-	class AccountRepository extends database.CrudRepository
+	class AccountRepository
 		
 		create: (model, options) -> 
 			
@@ -28,7 +28,7 @@ define ['database', 'exports'], (database, exports) ->
 						[]
 						(tx, result) ->
 							
-							account = if !result.rows.length then null else new AccountModel(result.rows[0])
+							account = if result.rows.length then new AccountModel(result.rows[0]) else null
 							
 							options.success account
 							
@@ -67,9 +67,6 @@ define ['database', 'exports'], (database, exports) ->
 		
 		defaults:
 			name: 'Unknown'
-			number: ''
-			countryCode: ''
-			password: ''
 		
 		initialize: -> @repository = AccountRepository.instance()
 	
@@ -78,6 +75,15 @@ define ['database', 'exports'], (database, exports) ->
 	
 	RegistrationView = Backbone.View.extend
 		initialize: ->
+			console.log 'RegistrationView initialize'
+			
+			@$el.bind 'pagebeforeshow', => @onPageBeforeShow()
+		
+		onPageBeforeShow: ->
+			
+			console.log 'RegistrationView onPageBeforeShow'
+			
+			@$('a[data-icon=delete]').hide()
 	
 	regViewInstance = null
 	

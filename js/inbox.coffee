@@ -7,14 +7,15 @@ define ['messages', 'location', 'exports'], (messages, location, exports) ->
 		
 		initialize: ->
 			
-			@$el.bind('pageShow', => @onPageShow())
+			console.log 'InboxView initialize'
+			
+			@$el.bind 'pageshow', => @onPageShow()
 			
 			messages = new messages.MessageCollection()
 			
-			messages.on('add', (message) => @onMessageAdd(message))
-			messages.on('change', (message) => @onMessageChange(message))
-			
-			messages.fetch()
+			messages.on 'reset', => @onMessagesReset()
+			messages.on 'add', (message) => @onMessageAdd(message)
+			messages.on 'change', (message) => @onMessageChange(message)
 			
 			@messages = messages
 			
@@ -22,17 +23,26 @@ define ['messages', 'location', 'exports'], (messages, location, exports) ->
 		
 		onPageShow: ->
 			
-			now = 0
+			console.log 'InboxView onPageShow'
 			
-			if @lastRequestTime + InboxView.AUTO_REQUEST_MAX_AGE > now
-				
-				# TODO: Request messages, add to @messages collection
-				
-				@lastRequestTime = now
+			@messages.fetch 
+				success: -> 
+					console.log 'Messages fetch success'
+					
+					now = 0
+					
+					if @lastRequestTime + InboxView.AUTO_REQUEST_MAX_AGE > now
+						
+						# TODO: Request messages, add to @messages collection
+						
+						@lastRequestTime = now
+				error: -> console.log arguments
 		
 		onMessageAdd: (message) ->
 			
-			list = @$('.content ul')
+			console.log 'InboxView onMessageAdd'
+			
+			list = @$('[data-role=content] ul')
 			
 			# TODO: Template for message
 			
@@ -40,10 +50,15 @@ define ['messages', 'location', 'exports'], (messages, location, exports) ->
 		
 		onMessageChange: (message) ->
 			
-			# TODO: Get message element and re-render
+			console.log 'InboxView onMessageChange'
 			
+			# TODO: Get message element and re-render
+		
+		onMessagesReset: -> @$('[data-role=content] ul').empty()
 		
 		onMessageItemClick: (item) ->
+			
+			console.log 'InboxView onMessageItemClick'
 			
 			id = item.data('id')
 			

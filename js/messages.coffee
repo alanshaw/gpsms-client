@@ -5,7 +5,7 @@ define ['database', 'exports'], (database, exports) ->
 	###
 	# Message repositories operate on messages in a particular state
 	###
-	class MessageRepository extends database.CrudRepository
+	class MessageRepository
 		
 		constructor: (state = State.RECEIVED) -> @state = state
 		
