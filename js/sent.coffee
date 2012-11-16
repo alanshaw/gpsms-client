@@ -1,6 +1,15 @@
-define ['app', 'location', 'exports'], (app, location, exports) ->
+define ['app', 'location', 'util', 'exports'], (app, location, util, exports) ->
 	
-	SentView = Backbone.View.extend
+	class SentView extends Backbone.View
+		
+		@id: 'pg-sent'
+		
+		@instance: (=> 
+			instance = null
+			=>
+				instance = new @(el: '#' + @id) if not instance
+				instance
+		)()
 		
 		events: 
 			'click .content ul a': @onMessageItemClick
@@ -35,9 +44,7 @@ define ['app', 'location', 'exports'], (app, location, exports) ->
 			
 			location.LocationView.instance().show message
 	
-	instance = null
-	
-	SentView.instance = -> if instance? then instance else new SentView(el: $('#pg-sent')) 
+	util.instantiateViewBeforePageChange(SentView)
 	
 	exports.SentView = SentView
 	

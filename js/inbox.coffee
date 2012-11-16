@@ -1,6 +1,17 @@
-define ['messages', 'location', 'exports'], (messages, location, exports) ->
+define ['messages', 'location', 'util', 'exports'], (messages, location, util, exports) ->
 	
-	InboxView = Backbone.View.extend
+	class InboxView extends Backbone.View
+		
+		@id: 'pg-inbox'
+		
+		@AUTO_REQUEST_MAX_AGE = 1000 * 60 * 5
+		
+		@instance: (=> 
+			instance = null
+			=>
+				instance = new @(el: '#' + @id) if not instance
+				instance
+		)()
 		
 		events: 
 			'click .content ul a': @onMessageItemClick
@@ -66,11 +77,7 @@ define ['messages', 'location', 'exports'], (messages, location, exports) ->
 			
 			location.LocationView.instance().show message
 	
-	InboxView.AUTO_REQUEST_MAX_AGE = 1000 * 60 * 5
-	
-	instance = null
-	
-	InboxView.instance = -> if instance? then instance else new InboxView(el: $('#pg-inbox'))
+	util.instantiateViewBeforePageChange(InboxView)
 	
 	exports.InboxView = InboxView
 	

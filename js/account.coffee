@@ -1,6 +1,13 @@
-define ['database', 'exports'], (database, exports) ->
+define ['database', 'util', 'lib/md5', 'exports'], (database, util, md5, exports) ->
 	
 	class AccountRepository
+		
+		@instance: (=> 
+			instance = null
+			=>
+				instance = new @() if not instance
+				instance
+		)()
 		
 		create: (model, options) -> 
 			
@@ -56,12 +63,8 @@ define ['database', 'exports'], (database, exports) ->
 				options.error
 			)
 	
-	repositoryInstance = null
 	
-	AccountRepository.instance = -> if repositoryInstance? then repositoryInstance else new AccountRepository()
-	
-	
-	AccountModel = Backbone.Model.extend
+	class AccountModel extends Backbone.Model
 		
 		sync: database.dbSync
 		
@@ -73,7 +76,20 @@ define ['database', 'exports'], (database, exports) ->
 	exports.AccountModel = AccountModel
 	
 	
-	RegistrationView = Backbone.View.extend
+	###
+	# Registration view
+	###
+	class RegistrationView extends Backbone.View
+		
+		@id: 'dlg-registration'
+		
+		@instance: (=> 
+			instance = null
+			=>
+				instance = new @(el: '#' + @id) if not instance
+				instance
+		)()
+		
 		initialize: ->
 			console.log 'RegistrationView initialize'
 			
@@ -85,10 +101,39 @@ define ['database', 'exports'], (database, exports) ->
 			
 			@$('a[data-icon=delete]').hide()
 	
-	regViewInstance = null
-	
-	RegistrationView.instance = -> if regViewInstance? then regViewInstance else new RegistrationView(el: '#dlg-registration')
+	# Have this view singleton created automatically as the login form links to it
+	util.instantiateViewBeforePageChange(RegistrationView)
 	
 	exports.RegistrationView = RegistrationView
+	
+	
+	###
+	# Login view
+	###
+	class LoginView extends Backbone.View
+		
+		@id: 'dlg-login'
+		
+		@instance: (=> 
+			instance = null
+			=>
+				instance = new @(el: '#' + @id) if not instance
+				instance
+		)()
+		
+		initialize: ->
+			console.log 'LoginView initialize'
+			
+			@$el.bind 'pagebeforeshow', => @onPageBeforeShow()
+		
+		onPageBeforeShow: ->
+			
+			console.log 'LoginView onPageBeforeShow'
+			
+			@$('a[data-icon=delete]').hide()
+	
+	util.instantiateViewBeforePageChange(LoginView)
+	
+	exports.LoginView = LoginView
 	
 	return

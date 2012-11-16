@@ -21,6 +21,8 @@ define ['database', 'account', 'inbox', 'exports'], (database, account, inbox, e
 	###
 	exports.init = ->
 		
+		$.mobile.loading 'show'
+		
 		console.log "GPSMS #{exports.getVersion()}"
 		
 		database.migrate()
@@ -31,12 +33,13 @@ define ['database', 'account', 'inbox', 'exports'], (database, account, inbox, e
 				
 				console.log "Hi #{model.get('name')}"
 				
-				if model.id?
-					view = inbox.InboxView.instance()
-				else
-					view = account.RegistrationView.instance()
+				view = if model.id? then inbox.InboxView.instance() else account.LoginView.instance()
 				
 				$.mobile.changePage view.$el
+				
+				$.mobile.loading 'hide'
+			
+			error: -> $.mobile.loading 'hide'
 		
 		delete exports.init
 	

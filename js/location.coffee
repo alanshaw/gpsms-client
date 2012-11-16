@@ -1,6 +1,15 @@
-define ['app', 'exports'], (app, exports) ->
+define ['util', 'exports'], (util, exports) ->
 	
-	LocationView = Backbone.View.extend
+	class LocationView extends Backbone.View
+		
+		@id: 'pg-location'
+		
+		@instance: (=> 
+			instance = null
+			=>
+				instance = new @(el: '#' + @id) if not instance
+				instance
+		)()
 		
 		initialize: -> 
 			
@@ -20,9 +29,7 @@ define ['app', 'exports'], (app, exports) ->
 		onPageHide: ->
 			# TODO: Stop following location
 	
-	instance = null
-	
-	LocationView.instance = -> if instance? then instance else new LocationView(el: $('pg-location'))
+	util.instantiateViewBeforePageChange(LocationView)
 	
 	exports.LocationView = LocationView
 	
