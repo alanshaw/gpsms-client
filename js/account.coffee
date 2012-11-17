@@ -1,4 +1,4 @@
-define ['database', 'util', 'lib/md5', 'exports'], (database, util, md5, exports) ->
+define ['database', 'account', 'util', 'lib/md5', 'exports'], (database, account, util, md5, exports) ->
 	
 	class AccountRepository
 		
@@ -35,9 +35,9 @@ define ['database', 'util', 'lib/md5', 'exports'], (database, util, md5, exports
 						[]
 						(tx, result) ->
 							
-							account = if result.rows.length then new AccountModel(result.rows[0]) else null
+							acc = if result.rows.length then new AccountModel(result.rows[0]) else null
 							
-							options.success account
+							options.success acc
 							
 						options.error
 					)
@@ -66,12 +66,28 @@ define ['database', 'util', 'lib/md5', 'exports'], (database, util, md5, exports
 	
 	class AccountModel extends Backbone.Model
 		
+		@emptyPasswords: [md5(''), md5(null), md5(undefined), '']
+		
 		sync: database.dbSync
 		
 		defaults:
 			name: 'Unknown'
 		
 		initialize: -> @repository = AccountRepository.instance()
+		
+		validate: (attrs) -> 
+			
+			if 'name' of attrs and ($.type(attrs.name) isnt 'string' or attrs.name is '')
+				return 'Invalid name'
+			
+			if 'number' of attrs and ($.type(attrs.number) isnt 'string' or attrs.number is '')
+				return 'Invalid phone number'
+			
+			if 'countryCode' of attrs and ($.type(attrs.countryCode) isnt 'string' or attrs.countryCode is '')
+				return 'Invalid country code'
+			
+			if 'password' of attrs and ($.type(attrs.password) isnt 'string' or AccountModel.emptyPasswords.indexOf(attrs.password) isnt -1)
+				return 'Invalid password'
 	
 	exports.AccountModel = AccountModel
 	
@@ -122,15 +138,51 @@ define ['database', 'util', 'lib/md5', 'exports'], (database, util, md5, exports
 		)()
 		
 		initialize: ->
+			
 			console.log 'LoginView initialize'
 			
 			@$el.bind 'pagebeforeshow', => @onPageBeforeShow()
+			
+			@$('form').submit((event) => @onLoginFormSubmit(event))
 		
 		onPageBeforeShow: ->
 			
 			console.log 'LoginView onPageBeforeShow'
 			
 			@$('a[data-icon=delete]').hide()
+		
+		onLoginFormSubmit: (event) ->
+			
+			event.preventDefault()
+			
+			$.mobile.loading 'show'
+			
+			new account.AccountModel().fetch
+				success: (model) =>
+					
+					data = {}
+					
+					_.each @$('form').serializeArray(), (i, field) -> data[field.name] = field.value
+					
+					model.save(
+						data,
+						success: =>
+							
+							console.log 'Login details successfully saved'
+							
+							# TODO: request to server to check credentials
+							# TODO: If correct, close dialog, change to inbox view
+							
+							$.mobile.loading 'hide'
+							
+						error: (model, error) ->
+							
+							navigator.notification.alert(error, null, 'Login error')
+							
+							$.mobile.loading 'hide'
+					)
+					
+		onLoginSuccess: -> console.log 'Login success!'
 	
 	util.instantiateViewBeforePageChange(LoginView)
 	
