@@ -11,33 +11,40 @@ define ['database', 'exports'], (database, exports) ->
 		
 		create: (model, options) -> 
 			
-			fields = 'id,sender_id,recipients,latitude,longitude,text,created,read,state'
+			fields = 'id,sender_id,recipients,latitude,longitude,text,created,read'
 			values = _.map(fields.split(','), (field) -> model.get(field)) # Array of values
 			places = _.map(values, -> '?').join() # String of ?'s
 			
 			database.get().transaction(
-				(tx) -> tx.executeSql("INSERT INTO MESSAGE (#{fields}) VALUES (#{places})", values)
-				options.success
-				options.error
+				(tx) -> tx.executeSql("INSERT INTO MESSAGE (#{fields},state) VALUES (#{places},#{@state})", values)
+				-> options.error(model)
+				-> options.success(model)
 			)
 		
 		read: (model, options) ->
 			
-			if model.id?
+			if model.get('id')?
 				
 				database.get().transaction(
 					(tx) ->
 						tx.executeSql(
-							'SELECT id,sender_id,recipients,latitude,longitude,text,created,read,state FROM MESSAGE WHERE id = ?'
-							[model.get('id')]
+							'SELECT id,sender_id,recipients,latitude,longitude,text,created,read FROM MESSAGE WHERE id = ? AND state = ?'
+							[model.get('id'), @state]
 							(tx, result) ->
 								
-								message = if !result.rows.length then null else new MessageModel(result.rows[0])
-								
-								options.success message
+								if result.rows.length
 									
-							options.error
+									model.set(result.rows[0])
+									
+									options.success model
+									
+								else
+									
+									options.error(model)
+									
+							-> options.error(model)
 						)
+					-> options.error(model)
 				)
 				
 			else
@@ -45,63 +52,90 @@ define ['database', 'exports'], (database, exports) ->
 				database.get().transaction(
 					(tx) ->
 						tx.executeSql(
-							'SELECT id,sender_id,recipients,latitude,longitude,text,created,read,state FROM MESSAGE'
-							[]
+							'SELECT id,sender_id,recipients,latitude,longitude,text,created,read FROM MESSAGE WHERE state = ?'
+							[@state]
 							(tx, result) ->
 								
-								messages = _.map(result.rows, (row) -> new MessageModel(row))
+								messages = new MessageModel(row) for row in result.rows
 								
 								options.success messages
 								
-							options.error
+							-> options.error(model)
 						)
+					-> options.error(model)
 				)
 		
 		update: (model, options) ->
 			
-			fields = 'sender_id,recipients,latitude,longitude,text,created,read,state,id'
-			values = _.map(fields.split(','), (field) -> model.get(field)) # Array of values
+			fields = 'sender_id,recipients,latitude,longitude,text,created,read,id'
+			values = _.map(fields.split(','), (field) -> model.get(field)).push(@state) # Array of values
 			
 			database.get().transaction(
-				(tx) -> tx.executeSql('UPDATE MESSAGE SET name = ?, number = ?, countryCode = ?, password = ? WHERE id = ?', values)
-				options.success
-				options.error
+				(tx) -> tx.executeSql(
+					'UPDATE MESSAGE SET name = ?, number = ?, countryCode = ?, password = ? WHERE id = ? AND state = ?'
+					values
+				)
+				-> options.error(model)
+				-> options.success(model)
 			)
 		
 		delete: (model, options) ->
 			
 			database.get().transaction(
-				(tx) -> tx.executeSql('DELETE FROM MESSAGE WHERE id = ?', [model.get('id')])
-				options.success
-				options.error
+				(tx) -> tx.executeSql('DELETE FROM MESSAGE WHERE id = ? AND state = ?', [model.get('id'), @state])
+				-> options.error(model)
+				-> options.success(model)
 			)
 	
-	MessageModel = Backbone.Model.extend
+	class MessageModel extends Backbone.Model
 		
 		sync: database.dbSync
 		
-		initialize: -> @repository = new MessageRepository(State.RECEIVED)
+		repository: new MessageRepository(State.RECEIVED)
 	
 	exports.MessageModel = MessageModel
 	
-	DraftMessageModel = MessageModel.extend
-		initialize: -> @repository = new MessageRepository(State.RECEIVED)
+	class DraftMessageModel extends MessageModel
+		repository: new MessageRepository(State.DRAFT)
 	
-	UnsentMessageModel = MessageModel.extend
-		initialize: -> @repository = new MessageRepository(State.UNSENT)
+	class UnsentMessageModel extends MessageModel
+		repository: new MessageRepository(State.UNSENT)
 	
-	SentMessageModel = MessageModel.extend
-		initialize: -> @repository = new MessageRepository(State.SENT)
+	class SentMessageModel extends MessageModel
+		repository: new MessageRepository(State.SENT)
 	
-	MessageCollection = Backbone.Collection.extend
+	class MessageCollection extends Backbone.Collection
+		
+		sync: database.dbSync
+		
+		repository: new MessageRepository(State.RECEIVED)
+		
 		model: MessageModel
 	
 	exports.MessageCollection = MessageCollection
 	
-	exports.DraftMessageCollection = MessageCollection.extend model: DraftMessageModel
+	class DraftMessageCollection extends MessageCollection
+		
+		model: DraftMessageModel
+		
+		repository: new MessageRepository(State.DRAFT)
 	
-	exports.UnsentMessageCollection = MessageCollection.extend model: UnsentMessageModel
+	exports.DraftMessageCollection = DraftMessageCollection
 	
-	exports.UnsentMessageCollection = MessageCollection.extend model: SentMessageModel
+	class UnsentMessageCollection extends MessageCollection
+		
+		model: UnsentMessageModel
+		
+		repository: new MessageRepository(State.UNSENT)
+	
+	exports.UnsentMessageCollection = UnsentMessageCollection
+	
+	class SentMessageCollection extends MessageCollection
+		
+		model: SentMessageModel
+		
+		repository: new MessageRepository(State.SENT)
+	
+	exports.SentMessageCollection = SentMessageCollection
 	
 	return

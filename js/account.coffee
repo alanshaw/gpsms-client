@@ -1,4 +1,4 @@
-define ['database', 'account', 'util', 'lib/md5', 'exports'], (database, account, util, md5, exports) ->
+define ['database', 'account', 'inbox', 'util', 'lib/md5', 'exports'], (database, account, inbox, util, md5, exports) ->
 	
 	class AccountRepository
 		
@@ -11,56 +11,92 @@ define ['database', 'account', 'util', 'lib/md5', 'exports'], (database, account
 		
 		create: (model, options) -> 
 			
-			fields = 'id,name,number,countryCode,password'
+			console.log 'AccountRepository create'
+			
+			fields = 'name,number,countryCode,password'
 			values = _.map(fields.split(','), (field) -> model.get(field)) # Array of values
 			places = _.map(values, -> '?').join() # String of ?'s
 			
 			database.get().transaction(
 				(tx) ->
 					tx.executeSql(
-						"INSERT INTO ACCOUNT (#{fields}) VALUES (#{values})",
+						"INSERT INTO ACCOUNT (#{fields}) VALUES (#{values})"
 						values
 					)
 				options.success
 				options.error
 			)
 			
-		# No read by ID (only ONE account in GPSMS)
 		read: (model, options) ->
 			
-			database.get().transaction(
-				(tx) ->
-					tx.executeSql(
-						'SELECT id, name, number, countryCode, password FROM ACCOUNT'
-						[]
-						(tx, result) ->
-							
-							acc = if result.rows.length then new AccountModel(result.rows[0]) else null
-							
-							options.success acc
-							
-						options.error
-					)
-			)
+			console.log 'AccountRepository read'
+			
+			if model.get('id')?
+				
+				database.get().transaction(
+					(tx) ->
+						tx.executeSql(
+							'SELECT id, name, number, countryCode, password FROM ACCOUNT WHERE id = ?'
+							[model.get('id')]
+							(tx, result) ->
+								
+								if result.rows.length
+									
+									model.set(result.rows[0])
+									
+									options.success model
+									
+								else
+									
+									console.log 'No account with id ' + model.get('id')
+									
+									options.error(model)
+						)
+					-> options.error(model)
+					null
+				)
+			
+			else
+				
+				database.get().transaction(
+					(tx) ->
+						tx.executeSql(
+							'SELECT id, name, number, countryCode, password FROM ACCOUNT'
+							[]
+							(tx, result) ->
+								
+								accs = new AccountModel(row) for row in result.rows
+								
+								options.success accs
+						)
+					-> options.error(model)
+					null
+				)
 			
 		update: (model, options) ->
 			
+			console.log 'AccountRepository update'
+			
+			console.log [model.get('name'), model.get('number'), model.get('countryCode'), model.get('password'), model.get('id')]
+			
 			database.get().transaction(
 				(tx) ->
 					tx.executeSql(
-						'UPDATE ACCOUNT SET name = ?, number = ?, countryCode = ?, password = ?',
-						[model.get('name'), model.get('number'), model.get('countryCode'), model.get('password')]
+						'UPDATE ACCOUNT SET name = ?, number = ?, countryCode = ?, password = ? WHERE id = ?',
+						[model.get('name'), model.get('number'), model.get('countryCode'), model.get('password'), model.get('id')]
 					)
-				options.success
-				options.error
+				-> options.error(model)
+				-> options.success(model)
 			)
 			
 		delete: (model, options) ->
 			
+			console.log 'AccountRepository delete'
+			
 			database.get().transaction(
 				(tx) -> tx.executeSql('DELETE FROM ACCOUNT WHERE id = ?', [model.get('id')])
-				options.success
-				options.error
+				-> options.error(model)
+				-> options.success(model)
 			)
 	
 	
@@ -76,6 +112,8 @@ define ['database', 'account', 'util', 'lib/md5', 'exports'], (database, account
 		initialize: -> @repository = AccountRepository.instance()
 		
 		validate: (attrs) -> 
+			
+			console.log 'AccountModel validate'
 			
 			if 'name' of attrs and ($.type(attrs.name) isnt 'string' or attrs.name is '')
 				return 'Invalid name'
@@ -153,36 +191,70 @@ define ['database', 'account', 'util', 'lib/md5', 'exports'], (database, account
 		
 		onLoginFormSubmit: (event) ->
 			
+			console.log 'LoginView onLoginFormSubmit'
+			
 			event.preventDefault()
 			
 			$.mobile.loading 'show'
 			
-			new account.AccountModel().fetch
+			data = 
+				number: @$('input[name=number]').val()
+				countryCode: @$('select[name=country-code]').val()
+				password: md5(@$('input[name=password]').val())
+			
+			new account.AccountModel(id: 1).fetch
 				success: (model) =>
 					
-					data = {}
-					
-					_.each @$('form').serializeArray(), (i, field) -> data[field.name] = field.value
+					console.log 'Account details fetch success'
 					
 					model.save(
-						data,
+						data
 						success: =>
 							
-							console.log 'Login details successfully saved'
+							console.log 'Account details saved'
 							
 							# TODO: request to server to check credentials
-							# TODO: If correct, close dialog, change to inbox view
 							
-							$.mobile.loading 'hide'
+							@loginSuccess()
 							
 						error: (model, error) ->
 							
-							navigator.notification.alert(error, null, 'Login error')
+							navigator.notification.alert(error, null, 'Account details update error')
 							
 							$.mobile.loading 'hide'
 					)
 					
-		onLoginSuccess: -> console.log 'Login success!'
+				error: =>
+					
+					console.log 'Account details fetch error'
+					
+					new account.AccountModel().save(
+						data
+						success: =>
+							
+							console.log 'Account details created'
+							
+							# TODO: request to server to check credentials
+							
+							@loginSuccess()
+							
+						error: (model, error) ->
+							
+							navigator.notification.alert(error, null, 'Account details create error')
+							
+							$.mobile.loading 'hide'
+					)
+		
+		loginSuccess: ->
+			
+			console.log 'Login success!'
+			
+			$.mobile.loading 'hide'
+			
+			@$el.dialog 'close'
+			
+			setTimeout(-> $.mobile.changePage inbox.InboxView.instance().$el, 1000)
+			
 	
 	util.instantiateViewBeforePageChange(LoginView)
 	

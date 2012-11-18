@@ -29,7 +29,7 @@ define ['app', 'migrate', 'exports'], (app, migrate, exports) ->
 			
 			# Get a list of versions we're going to have to transition through
 			transitionVersions = appVersions.slice(appVersions.indexOf(dbVersion) + 1)
-			currentTransitionVersion = version
+			currentTransitionVersion = dbVersion
 			
 			# Perform schema migrations
 			migrateDb = (tx) -> for transitionVersion in transitionVersions
@@ -76,6 +76,8 @@ define ['app', 'migrate', 'exports'], (app, migrate, exports) ->
 	# A Backbone.sync function that makes use of a CrudRepository
 	###
 	exports.dbSync = (method, model, options) ->
+		
+		console.log "database dbSync #{method}"
 		
 		_.defaults options, defaultSyncOptions
 		

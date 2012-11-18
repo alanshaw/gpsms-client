@@ -14,7 +14,7 @@ define ['messages', 'location', 'util', 'exports'], (messages, location, util, e
 		)()
 		
 		events: 
-			'click .content ul a': @onMessageItemClick
+			'click .content ul a': 'onMessageItemClick'
 		
 		initialize: ->
 			
@@ -65,7 +65,11 @@ define ['messages', 'location', 'util', 'exports'], (messages, location, util, e
 			
 			# TODO: Get message element and re-render
 		
-		onMessagesReset: -> @$('[data-role=content] ul').empty()
+		onMessagesReset: -> 
+			
+			console.log 'InboxView onMessagesReset'
+			
+			@$('[data-role=content] ul').empty()
 		
 		onMessageItemClick: (item) ->
 			

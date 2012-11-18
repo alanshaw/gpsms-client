@@ -28,18 +28,20 @@ define ['database', 'account', 'inbox', 'exports'], (database, account, inbox, e
 		database.migrate()
 		
 		# Does the user have an account?
-		new account.AccountModel().fetch
+		new account.AccountModel(id: 1).fetch
 			success: (model) ->
 				
 				console.log "Hi #{model.get('name')}"
 				
-				view = if model.id? then inbox.InboxView.instance() else account.LoginView.instance()
-				
-				$.mobile.changePage view.$el
+				$.mobile.changePage inbox.InboxView.instance().$el
 				
 				$.mobile.loading 'hide'
-			
-			error: -> $.mobile.loading 'hide'
+				
+			error: -> 
+				
+				$.mobile.changePage account.LoginView.instance().$el
+				
+				$.mobile.loading 'hide'
 		
 		delete exports.init
 	
