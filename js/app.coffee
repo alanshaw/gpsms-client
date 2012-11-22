@@ -31,6 +31,9 @@ define ['database', 'account', 'inbox', 'exports'], (database, account, inbox, e
 		new account.AccountModel(id: 1).fetch
 			success: (model) ->
 				
+				# Set the currently logged in user account
+				account.set model
+				
 				console.log "Hi #{model.get('name')}"
 				
 				$.mobile.changePage inbox.InboxView.instance().$el

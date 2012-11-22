@@ -77,7 +77,7 @@ define ['messages', 'location', 'util', 'exports'], (messages, location, util, e
 			
 			id = item.data('id')
 			
-			message = @messages.getById(id)
+			message = @messages.get(id)
 			
 			location.LocationView.instance().show message
 	

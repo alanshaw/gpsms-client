@@ -15,13 +15,27 @@ define ['database', 'exports'], (database, exports) ->
 			values = _.map(fields.split(','), (field) -> model.get(field)) # Array of values
 			places = _.map(values, -> '?').join() # String of ?'s
 			
+			messageId = null
+			
 			database.get().transaction(
-				(tx) -> tx.executeSql("INSERT INTO MESSAGE (#{fields},state) VALUES (#{places},#{@state})", values)
-				-> options.error(model)
-				-> options.success(model)
+				(tx) -> tx.executeSql(
+					"INSERT INTO MESSAGE (#{fields},state) VALUES (#{places},#{@state})",
+					values
+					(tx, result) -> messageId = result.insertId
+					options.error
+				)
+				options.error
+				-> 
+					console.log "New account id = #{messageId}"
+					
+					model.set 'id', messageId
+					
+					options.success model
 			)
 		
 		read: (model, options) ->
+			
+			rows = []
 			
 			if model.get('id')?
 				
@@ -30,21 +44,21 @@ define ['database', 'exports'], (database, exports) ->
 						tx.executeSql(
 							'SELECT id,sender_id,recipients,latitude,longitude,text,created,read FROM MESSAGE WHERE id = ? AND state = ?'
 							[model.get('id'), @state]
-							(tx, result) ->
-								
-								if result.rows.length
-									
-									model.set(result.rows[0])
-									
-									options.success model
-									
-								else
-									
-									options.error(model)
-									
-							-> options.error(model)
+							(tx, result) -> rows = result.rows
+							options.error
 						)
-					-> options.error(model)
+					options.error
+					->
+						
+						if rows.length
+							
+							model.set rows[0]
+							
+							options.success model
+							
+						else
+							
+							options.error(new Error('No message with id ' + model.get('id')))
 				)
 				
 			else
@@ -54,15 +68,14 @@ define ['database', 'exports'], (database, exports) ->
 						tx.executeSql(
 							'SELECT id,sender_id,recipients,latitude,longitude,text,created,read FROM MESSAGE WHERE state = ?'
 							[@state]
-							(tx, result) ->
-								
-								messages = new MessageModel(row) for row in result.rows
-								
-								options.success messages
-								
-							-> options.error(model)
+							(tx, result) -> rows = result.rows
+							options.error
 						)
-					-> options.error(model)
+					options.error
+					-> 
+						messages = new MessageModel(row) for row in rows
+						
+						options.success messages
 				)
 		
 		update: (model, options) ->

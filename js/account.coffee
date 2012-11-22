@@ -1,4 +1,29 @@
-define ['database', 'account', 'inbox', 'util', 'lib/md5', 'exports'], (database, account, inbox, util, md5, exports) ->
+###
+# Account module
+#
+# Events: 
+# 	accountChange - Fired when the current account is changed, listener is passed the AccountModel of the new account
+###
+define ['database', 'inbox', 'util', 'lib/md5', 'exports'], (database, inbox, util, md5, exports) ->
+	
+	_.extend(exports, Backbone.Events);
+	
+	account = null
+	
+	###
+	# @return {AccountModel} The current user account
+	###
+	exports.get = -> account
+	
+	###
+	# Set the account of the currently logged in user. Fires the accountChange event.
+	#
+	# @param {AccountModel} newAccount The account of the currently logged in user
+	###
+	exports.set = (newAccount) -> 
+		account = newAccount
+		exports.trigger 'accountChange', newAccount
+	
 	
 	class AccountRepository
 		
@@ -17,19 +42,30 @@ define ['database', 'account', 'inbox', 'util', 'lib/md5', 'exports'], (database
 			values = _.map(fields.split(','), (field) -> model.get(field)) # Array of values
 			places = _.map(values, -> '?').join() # String of ?'s
 			
+			accountId = null
+			
 			database.get().transaction(
 				(tx) ->
 					tx.executeSql(
-						"INSERT INTO ACCOUNT (#{fields}) VALUES (#{values})"
+						"INSERT INTO ACCOUNT (#{fields}) VALUES (#{places})"
 						values
+						(tx, result) -> accountId = result.insertId
+						options.error
 					)
-				options.success
 				options.error
+				-> 
+					console.log "New account id = #{accountId}"
+					
+					model.set 'id', accountId
+					
+					options.success model
 			)
 			
 		read: (model, options) ->
 			
 			console.log 'AccountRepository read'
+			
+			rows = []
 			
 			if model.get('id')?
 				
@@ -38,22 +74,22 @@ define ['database', 'account', 'inbox', 'util', 'lib/md5', 'exports'], (database
 						tx.executeSql(
 							'SELECT id, name, number, countryCode, password FROM ACCOUNT WHERE id = ?'
 							[model.get('id')]
-							(tx, result) ->
-								
-								if result.rows.length
-									
-									model.set(result.rows[0])
-									
-									options.success model
-									
-								else
-									
-									console.log 'No account with id ' + model.get('id')
-									
-									options.error(model)
+							(tx, result) -> rows = result.rows
+							options.error
 						)
-					-> options.error(model)
-					null
+					options.error
+					->
+						if rows.length
+							
+							model.set rows[0]
+							
+							options.success model
+							
+						else
+							
+							console.log 'No account with id ' + model.get('id')
+							
+							options.error(new Error('No account with id ' + model.get('id')))
 				)
 			
 			else
@@ -63,30 +99,30 @@ define ['database', 'account', 'inbox', 'util', 'lib/md5', 'exports'], (database
 						tx.executeSql(
 							'SELECT id, name, number, countryCode, password FROM ACCOUNT'
 							[]
-							(tx, result) ->
-								
-								accs = new AccountModel(row) for row in result.rows
-								
-								options.success accs
+							(tx, result) -> rows = result.rows
+							options.error
 						)
-					-> options.error(model)
-					null
+					options.error
+					-> 
+						accs = new AccountModel(row) for row in rows
+						
+						options.success accs
 				)
 			
 		update: (model, options) ->
 			
 			console.log 'AccountRepository update'
 			
-			console.log [model.get('name'), model.get('number'), model.get('countryCode'), model.get('password'), model.get('id')]
-			
 			database.get().transaction(
 				(tx) ->
 					tx.executeSql(
 						'UPDATE ACCOUNT SET name = ?, number = ?, countryCode = ?, password = ? WHERE id = ?',
 						[model.get('name'), model.get('number'), model.get('countryCode'), model.get('password'), model.get('id')]
+						(tx, result) ->
+						options.error
 					)
-				-> options.error(model)
-				-> options.success(model)
+				options.error
+				-> options.success model
 			)
 			
 		delete: (model, options) ->
@@ -94,9 +130,15 @@ define ['database', 'account', 'inbox', 'util', 'lib/md5', 'exports'], (database
 			console.log 'AccountRepository delete'
 			
 			database.get().transaction(
-				(tx) -> tx.executeSql('DELETE FROM ACCOUNT WHERE id = ?', [model.get('id')])
-				-> options.error(model)
-				-> options.success(model)
+				(tx) -> 
+					tx.executeSql(
+						'DELETE FROM ACCOUNT WHERE id = ?'
+						[model.get('id')]
+						(tx, result) ->
+						options.error
+					)
+				options.error
+				options.success
 			)
 	
 	
@@ -202,48 +244,43 @@ define ['database', 'account', 'inbox', 'util', 'lib/md5', 'exports'], (database
 				countryCode: @$('select[name=country-code]').val()
 				password: md5(@$('input[name=password]').val())
 			
-			new account.AccountModel(id: 1).fetch
-				success: (model) =>
+			new AccountModel(id: 1).fetch
+				success: (model) => @login(data, model)
+				error: => @login(data)
+		
+		###
+		# Login the user using the passed credentials
+		#
+		# @param {Object} credentials Login data required to login
+		# @param {String} credentials.number The user's phone number
+		# @param {String} credentials.countryCode The user's country code
+		# @param {String} credentials.password The user's encrypted password
+		# @param {AccountModel} [existingAccount] The existing account (if the user has one). Must be passed if the
+		# user DOES have an account otherwise a new account will be created. Updated with the loginData.
+		###
+		login: (credentials, existingAccount) ->
+			
+			existingAccount = new AccountModel() if not existingAccount?
+			action = if existingAccount.isNew() then 'create' else 'update'
+			
+			existingAccount.save(
+				credentials
+				success: =>
 					
-					console.log 'Account details fetch success'
+					console.log "Account details #{action}d"
 					
-					model.save(
-						data
-						success: =>
-							
-							console.log 'Account details saved'
-							
-							# TODO: request to server to check credentials
-							
-							@loginSuccess()
-							
-						error: (model, error) ->
-							
-							navigator.notification.alert(error, null, 'Account details update error')
-							
-							$.mobile.loading 'hide'
-					)
+					# TODO: request to server to check credentials
 					
-				error: =>
+					exports.set existingAccount
 					
-					console.log 'Account details fetch error'
+					@loginSuccess()
 					
-					new account.AccountModel().save(
-						data
-						success: =>
-							
-							console.log 'Account details created'
-							
-							# TODO: request to server to check credentials
-							
-							@loginSuccess()
-							
-						error: (model, error) ->
-							
-							navigator.notification.alert(error, null, 'Account details create error')
-							
-							$.mobile.loading 'hide'
-					)
+				error: (error) ->
+					
+					navigator.notification.alert(error.message, null, "Account details #{action} error")
+					
+					$.mobile.loading 'hide'
+			)
 		
 		loginSuccess: ->
 			

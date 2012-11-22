@@ -4,7 +4,7 @@ define (require, exports, module) ->
 		
 		tx.executeSql(
 			'CREATE TABLE IF NOT EXISTS ACCOUNT (
-				id unique,
+				id INTEGER PRIMARY KEY,
 				number,
 				name,
 				countryCode,
@@ -31,6 +31,7 @@ define (require, exports, module) ->
 		tx.executeSql(
 			'CREATE TABLE IF NOT EXISTS MESSAGE (
 				id unique,
+				account_id,
 				sender_id,
 				recipients,
 				latitude,
@@ -39,7 +40,8 @@ define (require, exports, module) ->
 				created,
 				read,
 				state,
-				CONSTRAINT fk_sender FOREIGN KEY (sender_id) REFERENCES CONTACT (id) ON DELETE CASCADE
+				CONSTRAINT fk_message_account FOREIGN KEY (account_id) REFERENCES ACCOUNT (id) ON DELETE CASCADE,
+				CONSTRAINT fk_message_sender FOREIGN KEY (sender_id) REFERENCES CONTACT (id) ON DELETE CASCADE
 			)'
 		)
 	
